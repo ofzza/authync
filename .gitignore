@@ -1,0 +1,12 @@
+# IDEs
+.vscode
+
+# Build artifacts
+/dist
+
+# Logs
+*.log
+*.bak
+
+# Explicit ignores
+*.gitignore.*

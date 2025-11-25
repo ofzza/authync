@@ -1,0 +1,27 @@
+{
+  "name": "authync",
+  "version": "0.0.1",
+  "description": "Syncs selected tabs' credentials between browsers",
+  "main": "/dist/index.js",
+  "scripts": {
+    "build": "npm run _copyres && tsc",
+    "watch": "npm run _copyres && tsc --watch",
+    "_copyres": "rimraf ./dist/* && copyfiles --up 1 ./src/**/* ./src/* ./dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ofzza/authync.git"
+  },
+  "author": "ofzza",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ofzza/authync/issues"
+  },
+  "homepage": "https://github.com/ofzza/authync#readme",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "copyfiles": "^2.4.1",
+    "rimraf": "^6.1.2",
+    "typescript": "^5.9.3"
+  }
+}
