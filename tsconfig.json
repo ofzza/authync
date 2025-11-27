@@ -1,6 +1,6 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
-  "include": ["src/*.mts"],
+  "include": ["src/*.ts", "src/**/*.ts"],
   "compilerOptions": {
     // File Layout
     "rootDir": "./src",
@@ -10,7 +10,7 @@
     // See also https://aka.ms/tsconfig/module
     "module": "esnext",
     "target": "esnext",
-    "types": [],
+    "types": ["@types/chrome"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],

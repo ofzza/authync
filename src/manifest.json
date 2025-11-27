@@ -8,19 +8,22 @@
     "128": "res/logo-128.png"
   },
   "background": {
-    "service_worker": "background.js",
+    "service_worker": "load-background.js",
     "type": "module"
   },
+  "host_permissions": ["<all_urls>"],
+  "permissions": ["scripting", "webRequest", "tabs", "cookies", "contextMenus"],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": ["load-content.js"],
+      "run_at": "document_start"
     }
   ],
   "web_accessible_resources": [
     {
       "matches": ["<all_urls>"],
-      "resources": ["content.mjs"]
+      "resources": ["*.js"]
     }
   ]
 }
