@@ -2,6 +2,11 @@ import { DEBUGGING } from './consts.js';
 import { registerHandler as registerConfigurationUpdateHandler, defaultConfiguration, type Configuration } from './config.js';
 
 /**
+ * Maximum file-size allowed before splitting
+ */
+const MAX_FILE_SIZE = 512 * 1024;
+
+/**
  * Initialize gist service
  */
 export async function init() {
@@ -22,9 +27,21 @@ let _config: Configuration = defaultConfiguration;
  * @param filename Filename to export to
  * @param data Data to export
  */
-export async function writeToGist(filename: string, data: any) {
+export async function writeToGist(filename: string, data: any, options?: Record<string, any>) {
   // Log: config change
   if (DEBUGGING) console.log('COMMON | gist.ts: Writing to Gist: ', filename, data);
+  // Split data if needed
+  const sections = [];
+  const serialized = await compress(JSON.stringify(data));
+  for (let i = 0; i < Math.ceil(serialized.length / MAX_FILE_SIZE); i++) {
+    sections.push(serialized.substr(i * MAX_FILE_SIZE, MAX_FILE_SIZE));
+  }
+  // Compose files
+  const files: Record<string, { content: string }> = {};
+  files[filename] = { content: JSON.stringify({ ...(options ?? {}), sections: sections.length }) };
+  for (const [i, section] of sections.entries()) {
+    files[`${filename}-${i.toString().padStart(5, '0')}`] = { content: section };
+  }
   // Export to gist
   await fetch(`https://api.github.com/gists/${_config.sync.gistId}`, {
     method: 'PATCH',
@@ -33,11 +50,7 @@ export async function writeToGist(filename: string, data: any) {
       ['Authorization', `Bearer ${_config.sync.gistToken}`],
       ['X-GitHub-Api-Version', '2022-11-28'],
     ],
-    body: JSON.stringify({
-      files: {
-        [filename]: { content: await compress(JSON.stringify(data)) },
-      },
-    }),
+    body: JSON.stringify({ files }),
   });
 }
 
@@ -60,13 +73,16 @@ export async function readFromGist(filename: string): Promise<any> {
   ).json();
   // Log: config change
   if (DEBUGGING) console.log('COMMON | gist.ts: Read from Gist: ', filename, data);
+  // Get info from main file
+  const { sections } = JSON.parse(data.files[filename].content);
+  // Collect data from files' content
+  let compressed = '';
+  for (let i = 0; i < sections; i++) {
+    compressed += data.files[`${filename}-${i.toString().padStart(5, '0')}`].content;
+  }
   // Extract requested file's content
   try {
-    if (data.files[filename].content && !data.files[filename].truncated) {
-      return JSON.parse(await decompress(data.files[filename].content));
-    } else {
-      return undefined;
-    }
+    return JSON.parse(await decompress(compressed));
   } catch (err) {
     console.error('ERROR:', err);
     debugger;

@@ -4,6 +4,7 @@ import { writeToGist } from '../gist.js';
 import { registerHandler as registerConfigurationUpdateHandler, findDocumentUrlPatternConfiguration } from './config.js';
 import { exportAllCookies } from './cookies.js';
 import { getAllLocalStorage } from './local_storage.js';
+import { toast } from './prompt.js';
 
 /**
  * Initializes content sync exporting refreshing service
@@ -108,10 +109,17 @@ async function exportCookiesToGist() {
  * Export tab's local storage to Gist
  */
 async function exportLocalStorageToGist() {
-  // Get local storage data
-  const data = await getAllLocalStorage();
-  // Log: exporting local storage
-  if (DEBUGGING) console.log('CONTENT | sync_export.ts: Exporting local storage to Gist: ', data);
-  // Export to gist
-  writeToGist(`${btoa(_documentUrlPattern)}_localStorage`, data);
+  try {
+    // Get local storage data
+    const data = await getAllLocalStorage();
+    // Log: exporting local storage
+    if (DEBUGGING) console.log('CONTENT | sync_export.ts: Exporting local storage to Gist: ', data);
+    // Export to gist
+    await writeToGist(`${btoa(_documentUrlPattern)}_LOCALSTORAGE`, data, { documentUrlPattern: _documentUrlPattern, exportType: 'localStorage' });
+    // Prompt
+    if (DEBUGGING) toast('info', `Exported ${Object.keys(data).length} local storage records`);
+  } catch {
+    // Prompt
+    if (DEBUGGING) toast('warning', 'Failed exporting local storage records!');
+  }
 }

@@ -16,7 +16,9 @@ export enum MessageType {
   ConfigurationRequest = 'configuration_request',
   ConfigurationUpdate = 'configuration_update',
   CookiesExportRequest = 'cookies_export_request',
+  CookiesExportResponse = 'cookies_export_response',
   CookiesImportRequest = 'cookies_import_request',
+  CookiesImportResponse = 'cookies_import_response',
 }
 
 /**

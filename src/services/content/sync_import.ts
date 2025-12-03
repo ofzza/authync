@@ -4,6 +4,7 @@ import { readFromGist } from '../gist.js';
 import { registerHandler as registerConfigurationUpdateHandler, findDocumentUrlPatternConfiguration } from './config.js';
 import { importAllCookies } from './cookies.js';
 import { setAllLocalStorage } from './local_storage.js';
+import { toast } from './prompt.js';
 
 /**
  * Initializes content sync importing refreshing service
@@ -108,10 +109,17 @@ async function importCookiesFromGist() {
  * Import tab's local storage from Gist
  */
 async function importLocalStorageFromGist() {
-  // Import from gist
-  const data = await readFromGist(`${btoa(_documentUrlPattern)}_localStorage`);
-  // Log: importing local storage
-  if (DEBUGGING) console.log('CONTENT | sync_import.ts: Importing local storage from Gist: ', data);
-  // Set local storage data
-  await setAllLocalStorage(data);
+  try {
+    // Import from gist
+    const data = await readFromGist(`${btoa(_documentUrlPattern)}_LOCALSTORAGE`);
+    // Log: importing local storage
+    if (DEBUGGING) console.log('CONTENT | sync_import.ts: Importing local storage from Gist: ', data);
+    // Set local storage data
+    await setAllLocalStorage(data);
+    // Prompt
+    if (DEBUGGING) toast('info', `Imported ${Object.keys(data).length} local storage records`);
+  } catch {
+    // Prompt
+    if (DEBUGGING) toast('warning', 'Failed importing local storage records!');
+  }
 }

@@ -10,6 +10,15 @@ export type CookiesExportRequest = {
 };
 
 /**
+ * CookiesExportResponse message type
+ */
+export type CookiesExportResponse = {
+  type: MessageType.CookiesExportResponse;
+  success: boolean;
+  count: number;
+};
+
+/**
  * CookiesImportRequest message type
  */
 export type CookiesImportRequest = {
@@ -17,4 +26,13 @@ export type CookiesImportRequest = {
   url: string;
   origins: string[];
   documentUrlPattern: string;
+};
+
+/**
+ * CookiesImportResponse message type
+ */
+export type CookiesImportResponse = {
+  type: MessageType.CookiesImportResponse;
+  success: boolean;
+  count: number;
 };

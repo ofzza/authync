@@ -39,7 +39,7 @@ export type DocumentUrlPatternConfiguration = {
  */
 export const defaultConfiguration: Configuration = {
   sync: {
-    gistId: 'd0a53de9309b30c019b3af29a02284a4',
+    gistId: '32a3e8282388a14272dc3a2c0450afd7',
     gistToken: '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',
   },
   documentUrlPatterns: {

@@ -26,7 +26,7 @@ export async function init() {
   const configurationUpdateMsg = (await send(msg)) as ConfigurationUpdateMessage | undefined;
   if (configurationUpdateMsg !== undefined) {
     // Log: update received
-    if (DEBUGGING) console.log('BACKGROUND | config.ts: Received ConfigurationUpdate: ', configurationUpdateMsg);
+    if (DEBUGGING) console.log('CONTENT | config.ts: Received ConfigurationUpdate: ', configurationUpdateMsg);
     // Store configuration update
     _config = configurationUpdateMsg.config;
   }
@@ -35,7 +35,7 @@ export async function init() {
   registerMessageHandler(async (message: Message, sender: chrome.runtime.MessageSender) => {
     if (message.type === MessageType.ConfigurationUpdate) {
       // Log: update received
-      if (DEBUGGING) console.log('BACKGROUND | config.ts: Received ConfigurationUpdate: ', message, sender);
+      if (DEBUGGING) console.log('CONTENT | config.ts: Received ConfigurationUpdate: ', message, sender);
       // Store configuration update
       _config = message.config;
       // Process configuration update(s)
