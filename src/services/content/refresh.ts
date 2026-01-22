@@ -1,10 +1,24 @@
 import { DEBUGGING } from '../consts.js';
-import { registerHandler as registerConfigurationUpdateHandler, findDocumentUrlPatternConfiguration } from './config.js';
+import { findDocumentUrlPatternConfiguration } from '../config.js';
+import { registerHandler as registerConfigurationUpdateHandler } from './config.js';
+import { toast } from './prompt.js';
 
 /**
  * Initializes content tab refreshing service
  */
 export async function init() {
+  // Check if just auto-refreshed
+  try {
+    const refreshTimestampStr = sessionStorage.getItem(`authync-autorefresh-timestamp`);
+    if (refreshTimestampStr) {
+      const refreshTimestamp = JSON.parse(refreshTimestampStr);
+      if (Date.now() - refreshTimestamp < 60e3) {
+        // Prompt
+        if (DEBUGGING) toast('info', `Auto refreshed the page`);
+      }
+    }
+  } catch {}
+
   // Register for configuration updates
   registerConfigurationUpdateHandler(config => {
     // Log: config change
@@ -93,6 +107,8 @@ function onIdleTimeout() {
   if (DEBUGGING) console.log('CONTENT | refresh.ts: Idle interval detected - REFRESHING TAB!');
   // Reschedule (in case refresh fails)
   scheduleIdleTimeout();
+  // Log refresh into session storage
+  sessionStorage.setItem(`authync-autorefresh-timestamp`, JSON.stringify(Date.now()));
   // Refresh tab
   window.location.reload();
 }

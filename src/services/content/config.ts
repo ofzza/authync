@@ -10,7 +10,7 @@ import {
   type ConfigurationUpdateMessage,
   type ConfigurationUpdateHandler,
 } from '../config.js';
-import { send, registerHandler as registerMessageHandler, type Message, MessageType } from './messaging.js';
+import { sendToBackground, registerHandler as registerMessageHandler, type Message, MessageType } from './messaging.js';
 
 // Configuration content storage (TODO: Replace with persistent storage calls)
 let _config: Configuration = defaultConfiguration;
@@ -23,7 +23,7 @@ export async function init() {
   if (DEBUGGING) console.log('CONTENT | config.ts: Sending ConfigurationRequest');
   // Request a configuration update
   const msg: ConfigurationRequestMessage = { type: MessageType.ConfigurationRequest };
-  const configurationUpdateMsg = (await send(msg)) as ConfigurationUpdateMessage | undefined;
+  const configurationUpdateMsg = (await sendToBackground(msg)) as ConfigurationUpdateMessage | undefined;
   if (configurationUpdateMsg !== undefined) {
     // Log: update received
     if (DEBUGGING) console.log('CONTENT | config.ts: Received ConfigurationUpdate: ', configurationUpdateMsg);
@@ -40,6 +40,9 @@ export async function init() {
       _config = message.config;
       // Process configuration update(s)
       triggerConfigurationUpdateHandlers(_config);
+    } else {
+      // Log: unknown received
+      if (DEBUGGING) console.log('CONTENT | config.ts: Received UNKNOWN: ', message, sender);
     }
   });
 }
@@ -50,17 +53,4 @@ export async function init() {
 export function registerHandler(handler: ConfigurationUpdateHandler) {
   registerConfigurationUpdateHandler(handler);
   handler(_config);
-}
-
-/**
- * Gets configuration for a tab based off of its URL
- * @param url Tab URL to match against configuration document URL patterns
- * @returns Appropriate configuration if one is found
- */
-export function findDocumentUrlPatternConfiguration(url: string, config: Configuration = _config): [string, DocumentUrlPatternConfiguration] | undefined {
-  for (const pattern of Object.keys(config.documentUrlPatterns)) {
-    if (verifyUrlAgainstDocumentUrlPatterns(url, [pattern])) {
-      return config.documentUrlPatterns[pattern] !== undefined ? [pattern, config.documentUrlPatterns[pattern]] : undefined;
-    }
-  }
 }

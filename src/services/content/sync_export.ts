@@ -1,7 +1,9 @@
 import { DEBUGGING } from '../consts.js';
-import { defaultConfiguration, type Configuration } from '../config.js';
+import { type SyncExportRequest } from '../sync.js';
 import { writeToGist } from '../gist.js';
-import { registerHandler as registerConfigurationUpdateHandler, findDocumentUrlPatternConfiguration } from './config.js';
+import { registerHandler as registerMessageHandler, MessageType } from './messaging.js';
+import { defaultConfiguration, type Configuration, findDocumentUrlPatternConfiguration } from '../config.js';
+import { registerHandler as registerConfigurationUpdateHandler } from './config.js';
 import { exportAllCookies } from './cookies.js';
 import { getAllLocalStorage } from './local_storage.js';
 import { toast } from './prompt.js';
@@ -24,6 +26,13 @@ export async function init() {
       } else {
         stop();
       }
+    }
+  });
+
+  // Register for messages
+  registerMessageHandler(message => {
+    if (message.type === MessageType.SyncExportRequest) {
+      exportAllToGist((message as SyncExportRequest).documentUrlPattern);
     }
   });
 }
@@ -91,31 +100,31 @@ async function onInterval() {
 /**
  * Export all of relevant tab data to Gist
  */
-async function exportAllToGist() {
-  await Promise.all([exportCookiesToGist(), exportLocalStorageToGist()]);
+async function exportAllToGist(documentUrlPattern: string = _documentUrlPattern) {
+  await Promise.all([exportCookiesToGist(documentUrlPattern), exportLocalStorageToGist(documentUrlPattern)]);
 }
 
 /**
  * Export tab's local storage to Gist
  */
-async function exportCookiesToGist() {
+async function exportCookiesToGist(documentUrlPattern: string = _documentUrlPattern) {
   // Log: exporting cookies
   if (DEBUGGING) console.log('CONTENT | sync_export.ts: Requesting cookies export to Gist ...');
   // Request cookies export
-  await exportAllCookies(_documentUrlPattern);
+  await exportAllCookies(documentUrlPattern);
 }
 
 /**
  * Export tab's local storage to Gist
  */
-async function exportLocalStorageToGist() {
+async function exportLocalStorageToGist(documentUrlPattern: string = _documentUrlPattern) {
   try {
     // Get local storage data
     const data = await getAllLocalStorage();
     // Log: exporting local storage
     if (DEBUGGING) console.log('CONTENT | sync_export.ts: Exporting local storage to Gist: ', data);
     // Export to gist
-    await writeToGist(`${btoa(_documentUrlPattern)}_LOCALSTORAGE`, data, { documentUrlPattern: _documentUrlPattern, exportType: 'localStorage' });
+    await writeToGist(`${btoa(documentUrlPattern)}_LOCALSTORAGE`, data, { documentUrlPattern, exportType: 'localStorage' });
     // Prompt
     if (DEBUGGING) toast('info', `Exported ${Object.keys(data).length} local storage records`);
   } catch {

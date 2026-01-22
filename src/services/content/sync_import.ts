@@ -1,7 +1,9 @@
 import { DEBUGGING } from '../consts.js';
-import { defaultConfiguration, type Configuration } from '../config.js';
+import { type SyncImportRequest } from '../sync.js';
 import { readFromGist } from '../gist.js';
-import { registerHandler as registerConfigurationUpdateHandler, findDocumentUrlPatternConfiguration } from './config.js';
+import { registerHandler as registerMessageHandler, MessageType } from './messaging.js';
+import { defaultConfiguration, type Configuration, findDocumentUrlPatternConfiguration } from '../config.js';
+import { registerHandler as registerConfigurationUpdateHandler } from './config.js';
 import { importAllCookies } from './cookies.js';
 import { setAllLocalStorage } from './local_storage.js';
 import { toast } from './prompt.js';
@@ -24,6 +26,13 @@ export async function init() {
       } else {
         stop();
       }
+    }
+  });
+
+  // Register for messages
+  registerMessageHandler(message => {
+    if (message.type === MessageType.SyncImportRequest) {
+      importAllFromGist((message as SyncImportRequest).documentUrlPattern);
     }
   });
 }
@@ -91,27 +100,27 @@ async function onInterval() {
 /**
  * Import all of relevant tab data from Gist
  */
-async function importAllFromGist() {
-  await Promise.all([importCookiesFromGist(), importLocalStorageFromGist()]);
+async function importAllFromGist(documentUrlPattern: string = _documentUrlPattern) {
+  await Promise.all([importCookiesFromGist(documentUrlPattern), importLocalStorageFromGist(documentUrlPattern)]);
 }
 
 /**
  * Import tab's local storage from Gist
  */
-async function importCookiesFromGist() {
+async function importCookiesFromGist(documentUrlPattern: string = _documentUrlPattern) {
   // Log: importing cookies
   if (DEBUGGING) console.log('CONTENT | sync_import.ts: Requesting cookies import from Gist ...');
   // Request cookies import
-  await importAllCookies(window.location.toString(), _documentUrlPattern);
+  await importAllCookies(window.location.toString(), documentUrlPattern);
 }
 
 /**
  * Import tab's local storage from Gist
  */
-async function importLocalStorageFromGist() {
+async function importLocalStorageFromGist(documentUrlPattern: string = _documentUrlPattern) {
   try {
     // Import from gist
-    const data = await readFromGist(`${btoa(_documentUrlPattern)}_LOCALSTORAGE`);
+    const data = await readFromGist(`${btoa(documentUrlPattern)}_LOCALSTORAGE`);
     // Log: importing local storage
     if (DEBUGGING) console.log('CONTENT | sync_import.ts: Importing local storage from Gist: ', data);
     // Set local storage data

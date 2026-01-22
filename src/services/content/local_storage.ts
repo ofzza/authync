@@ -1,5 +1,4 @@
 import { DEBUGGING } from '../consts.js';
-import { send, MessageType } from './messaging.js';
 
 /**
  * Gets all keys and values out of local storage

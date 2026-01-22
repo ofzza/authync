@@ -1,5 +1,5 @@
 import { DEBUGGING } from '../consts.js';
-import { send, registerHandler as registerMessageHandler, type Message, MessageType } from './messaging.js';
+import { sendToBackground, registerHandler as registerMessageHandler, type Message, MessageType } from './messaging.js';
 import { type CookiesExportRequest, type CookiesExportResponse, type CookiesImportRequest, type CookiesImportResponse } from '../cookies.js';
 import { toast } from './prompt.js';
 
@@ -40,7 +40,7 @@ export async function init() {
  */
 export async function exportAllCookies(documentUrlPattern: string) {
   const msg: CookiesExportRequest = { type: MessageType.CookiesExportRequest, origins: await detectResourceOrigins(), documentUrlPattern };
-  await send(msg);
+  await sendToBackground(msg);
 }
 
 /**
@@ -49,7 +49,7 @@ export async function exportAllCookies(documentUrlPattern: string) {
  */
 export async function importAllCookies(url: string, documentUrlPattern: string) {
   const msg: CookiesImportRequest = { type: MessageType.CookiesImportRequest, origins: await detectResourceOrigins(), url, documentUrlPattern };
-  await send(msg);
+  await sendToBackground(msg);
 }
 
 async function detectResourceOrigins(): Promise<string[]> {

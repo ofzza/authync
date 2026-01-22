@@ -18,20 +18,19 @@ export type DocumentUrlPatternConfiguration = {
     active: boolean;
     interval: number;
   };
-  sync:
+  sync: {
+    active: boolean;
+    interval: number;
+  } & (
     | {
-        active: boolean;
-        interval: number;
-      } & (
-        | {
-            active: true;
-            direction: 'export' | 'import';
-          }
-        | {
-            active: false;
-            direction: undefined;
-          }
-      );
+        active: true;
+        direction: 'export' | 'import';
+      }
+    | {
+        active: false;
+        direction: undefined;
+      }
+  );
 };
 
 /**
@@ -43,9 +42,17 @@ export const defaultConfiguration: Configuration = {
     gistToken: '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',
   },
   documentUrlPatterns: {
+    'https://ofzza.com/*': {
+      refresh: { active: false, interval: 5 * 60e3 },
+      sync: { active: false, interval: 10 * 60e3, direction: undefined },
+    },
+    'https://opswat.atlassian.net/*': {
+      refresh: { active: false, interval: 5 * 60e3 },
+      sync: { active: false, interval: 10 * 60e3, direction: undefined },
+    },
     'https://teams.microsoft.com/v2/*': {
-      refresh: { active: true, interval: 30 * 60 * 1000 },
-      sync: { active: true, interval: 10 * 60 * 1000, direction: 'import' },
+      refresh: { active: false, interval: 5 * 60e3 },
+      sync: { active: false, interval: 10 * 60e3, direction: undefined },
     },
   },
 };
@@ -63,6 +70,23 @@ export type ConfigurationRequestMessage = {
 export type ConfigurationUpdateMessage = {
   type: MessageType.ConfigurationUpdate;
   config: Configuration;
+};
+
+/**
+ * ConfigurationPartialEditRequestMessage message type
+ */
+export type ConfigurationEditRequestMessage = {
+  type: MessageType.ConfigurationEditRequest;
+  config: Configuration;
+};
+
+/**
+ * ConfigurationPartialEditRequestMessage message type
+ */
+export type ConfigurationPartialEditRequestMessage = {
+  type: MessageType.ConfigurationPartialEditRequest;
+  documentUrlPattern: string;
+  config: DocumentUrlPatternConfiguration;
 };
 
 /**
@@ -101,4 +125,17 @@ export function verifyUrlAgainstDocumentUrlPatterns(url: string, patterns: strin
     }
   }
   return false;
+}
+
+/**
+ * Gets configuration for a tab based off of its URL
+ * @param url Tab URL to match against configuration document URL patterns
+ * @returns Appropriate configuration if one is found
+ */
+export function findDocumentUrlPatternConfiguration(url: string, config: Configuration): [string, DocumentUrlPatternConfiguration] | undefined {
+  for (const pattern of Object.keys(config.documentUrlPatterns)) {
+    if (verifyUrlAgainstDocumentUrlPatterns(url, [pattern])) {
+      return config.documentUrlPatterns[pattern] !== undefined ? [pattern, config.documentUrlPatterns[pattern]] : undefined;
+    }
+  }
 }
