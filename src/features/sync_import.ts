@@ -1,12 +1,15 @@
-import { DEBUGGING } from '../consts.js';
-import { type SyncImportRequest } from '../sync.js';
-import { readFromGist } from '../gist.js';
-import { registerHandler as registerMessageHandler, MessageType } from './messaging.js';
-import { defaultConfiguration, type Configuration, findDocumentUrlPatternConfiguration } from '../config.js';
-import { registerHandler as registerConfigurationUpdateHandler } from './config.js';
-import { importAllCookies } from './cookies.js';
-import { setAllLocalStorage } from './local_storage.js';
-import { toast } from './prompt.js';
+import { DEBUGGING } from '../services/consts.js';
+import { defaultConfiguration, type Configuration, findDocumentUrlPatternConfiguration } from '../services/config.js';
+import { type SyncImportRequest } from '../services/sync.js';
+import { readFromGist } from '../services/gist.js';
+import type { CookiesImportRequest, CookiesImportResponse } from '../services/cookies.js';
+import { registerHandler as registerMessageHandler, MessageType, type Message, sendToBackground } from '../services/content/messaging.js';
+import { registerHandler as registerConfigurationUpdateHandler } from '../services/content/config.js';
+import { setAllLocalStorage } from '../services/content/local_storage.js';
+import { toast } from '../services/content/toast.js';
+import { detectResourceOrigins } from '../services/content/origin.js';
+
+let updateLastCookieImportToast: ReturnType<typeof toast> | undefined = undefined;
 
 /**
  * Initializes content sync importing refreshing service
@@ -27,6 +30,20 @@ export async function init() {
         stop();
       }
     }
+    // Register for cookie import response
+    registerMessageHandler(async (message: Message, sender: chrome.runtime.MessageSender) => {
+      if (message.type === MessageType.CookiesImportResponse) {
+        // Log: update received
+        if (DEBUGGING) console.log('CONTENT | config.ts: Received Cookie import update: ', message, sender);
+        // Prompt
+        const msg = message as CookiesImportResponse;
+        if (msg.success) {
+          updateLastCookieImportToast?.('success', `Imported ${msg.count} cookies`);
+        } else {
+          updateLastCookieImportToast?.('warning', `Failed importing cookies!`);
+        }
+      }
+    });
   });
 
   // Register for messages
@@ -108,16 +125,26 @@ async function importAllFromGist(documentUrlPattern: string = _documentUrlPatter
  * Import tab's local storage from Gist
  */
 async function importCookiesFromGist(documentUrlPattern: string = _documentUrlPattern) {
+  // Prompt importing
+  updateLastCookieImportToast = toast('info', 'Importing cookies ...');
   // Log: importing cookies
   if (DEBUGGING) console.log('CONTENT | sync_import.ts: Requesting cookies import from Gist ...');
   // Request cookies import
-  await importAllCookies(window.location.toString(), documentUrlPattern);
+  const msg: CookiesImportRequest = {
+    type: MessageType.CookiesImportRequest,
+    origins: await detectResourceOrigins(),
+    url: window.location.toString(),
+    documentUrlPattern,
+  };
+  await sendToBackground(msg);
 }
 
 /**
  * Import tab's local storage from Gist
  */
 async function importLocalStorageFromGist(documentUrlPattern: string = _documentUrlPattern) {
+  // Prompt
+  const updateToast = toast('info', `Importing local storage ...`);
   try {
     // Import from gist
     const data = await readFromGist(`${btoa(documentUrlPattern)}_LOCALSTORAGE`);
@@ -126,9 +153,9 @@ async function importLocalStorageFromGist(documentUrlPattern: string = _document
     // Set local storage data
     await setAllLocalStorage(data);
     // Prompt
-    if (DEBUGGING) toast('info', `Imported ${Object.keys(data).length} local storage records`);
+    updateToast('success', `Imported ${Object.keys(data).length} local storage records`);
   } catch {
     // Prompt
-    if (DEBUGGING) toast('warning', 'Failed importing local storage records!');
+    updateToast('warning', 'Failed importing local storage records!');
   }
 }

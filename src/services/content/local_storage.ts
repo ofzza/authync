@@ -17,6 +17,14 @@ export async function getAllLocalStorage() {
 }
 
 /**
+ * Clears all keys and values from local storage
+ */
+export async function clearAllLocalStorage() {
+  // Clear all keys and values from local storage
+  window.localStorage.clear();
+}
+
+/**
  * Sets all keys and values to local storage
  * @param local Keys and values to set
  */

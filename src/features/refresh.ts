@@ -1,7 +1,7 @@
-import { DEBUGGING } from '../consts.js';
-import { findDocumentUrlPatternConfiguration } from '../config.js';
-import { registerHandler as registerConfigurationUpdateHandler } from './config.js';
-import { toast } from './prompt.js';
+import { DEBUGGING } from '../services/consts.js';
+import { findDocumentUrlPatternConfiguration } from '../services/config.js';
+import { registerHandler as registerConfigurationUpdateHandler } from '../services/content/config.js';
+import { toast } from '../services/content/toast.js';
 
 /**
  * Initializes content tab refreshing service
@@ -14,7 +14,7 @@ export async function init() {
       const refreshTimestamp = JSON.parse(refreshTimestampStr);
       if (Date.now() - refreshTimestamp < 60e3) {
         // Prompt
-        if (DEBUGGING) toast('info', `Auto refreshed the page`);
+        if (DEBUGGING) toast('success', `Auto refreshed the page`);
       }
     }
   } catch {}

@@ -60,7 +60,6 @@ function recreateContextMenus(config: Configuration) {
     chrome.contextMenus.create({
       parentId: 'authync',
       id: `authync-break|${documentUrlPattern}`,
-      title: 'Import Auth session(s) NOW',
       type: 'separator',
       documentUrlPatterns: [documentUrlPattern],
     });

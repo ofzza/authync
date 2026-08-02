@@ -8,7 +8,7 @@ let toastsContainerEl: HTMLDivElement | undefined = undefined;
  * @param type Type of toast
  * @param message Message to display
  */
-export function toast(type: 'info' | 'warning' | 'error', message: string) {
+export function toast(type: 'info' | 'success' | 'warning' | 'error', message: string) {
   // Log
   console.log(`CONTENT | prompt.ts: ${type.toUpperCase()} - ${message}`);
 
@@ -32,7 +32,14 @@ export function toast(type: 'info' | 'warning' | 'error', message: string) {
   el.style.margin = '4px';
   el.style.padding = '8px';
   el.style.boxShadow = '0px 1px 2px 2px rgba(230, 230, 230, 0.2)';
-  el.style.background = 'rgba(128, 128, 128, 0.4)';
+  el.style.background =
+    type === 'info'
+      ? 'rgba(128, 128, 128, 0.4)'
+      : type === 'success'
+        ? 'rgba(0, 128, 0, 0.4)'
+        : type === 'warning'
+          ? 'rgba(255, 165, 0, 0.4)'
+          : 'rgba(255, 0, 0, 0.4)';
   el.style.justifyContent = 'start';
   el.style.alignContent = 'center';
   el.style.fontFamily = 'monospace';
@@ -43,5 +50,23 @@ export function toast(type: 'info' | 'warning' | 'error', message: string) {
   toastsContainerEl.append(el);
 
   // Handle prompt/toast removal
-  setTimeout(() => el.remove(), 10e3);
+  let removeTimeout = setTimeout(() => el.remove(), 10e3);
+
+  // Return prompt/toast update function
+  return (type: 'info' | 'success' | 'warning' | 'error', message: string) => {
+    // Update prompt/toast element
+    el.style.background =
+      type === 'info'
+        ? 'rgba(128, 128, 128, 0.4)'
+        : type === 'success'
+          ? 'rgba(0, 128, 0, 0.4)'
+          : type === 'warning'
+            ? 'rgba(255, 165, 0, 0.4)'
+            : 'rgba(255, 0, 0, 0.4)';
+    el.innerText = `${type.toUpperCase()}: ${message}`;
+
+    // Reset removal
+    clearTimeout(removeTimeout);
+    removeTimeout = setTimeout(() => el.remove(), 10e3);
+  };
 }
