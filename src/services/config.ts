@@ -50,7 +50,11 @@ export const defaultConfiguration: Configuration = {
       refresh: { active: false, interval: 5 * 60e3 },
       sync: { active: false, interval: 10 * 60e3, direction: undefined },
     },
-    'https://teams.microsoft.com/v2/*': {
+    'https://teams.cloud.microsoft/*': {
+      refresh: { active: false, interval: 5 * 60e3 },
+      sync: { active: false, interval: 10 * 60e3, direction: undefined },
+    },
+    'https://teams.microsoft.com/*': {
       refresh: { active: false, interval: 5 * 60e3 },
       sync: { active: false, interval: 10 * 60e3, direction: undefined },
     },
