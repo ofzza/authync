@@ -19,18 +19,6 @@ let _config: Configuration = defaultConfiguration;
  * Initializes content configuration service
  */
 export async function init() {
-  // Log: sending request
-  if (DEBUGGING) console.log('CONTENT | config.ts: Sending ConfigurationRequest');
-  // Request a configuration update
-  const msg: ConfigurationRequestMessage = { type: MessageType.ConfigurationRequest };
-  const configurationUpdateMsg = (await sendToBackground(msg)) as ConfigurationUpdateMessage | undefined;
-  if (configurationUpdateMsg !== undefined) {
-    // Log: update received
-    if (DEBUGGING) console.log('CONTENT | config.ts: Received ConfigurationUpdate: ', configurationUpdateMsg);
-    // Store configuration update
-    _config = configurationUpdateMsg.config;
-  }
-
   // Handle configuration updates
   registerMessageHandler(async (message: Message, sender: chrome.runtime.MessageSender) => {
     if (message.type === MessageType.ConfigurationUpdate) {
@@ -45,6 +33,20 @@ export async function init() {
       if (DEBUGGING) console.log('CONTENT | config.ts: Received UNKNOWN: ', message, sender);
     }
   });
+
+  // Log: sending request
+  if (DEBUGGING) console.log('CONTENT | config.ts: Sending ConfigurationRequest');
+  // Request a configuration update
+  const msg: ConfigurationRequestMessage = { type: MessageType.ConfigurationRequest };
+  const configurationUpdateMsg = (await sendToBackground(msg)) as ConfigurationUpdateMessage | undefined;
+  if (configurationUpdateMsg !== undefined) {
+    // Log: update received
+    if (DEBUGGING) console.log('CONTENT | config.ts: Received ConfigurationUpdate: ', configurationUpdateMsg);
+    // Store configuration update
+    _config = configurationUpdateMsg.config;
+    // Process configuration update(s)
+    triggerConfigurationUpdateHandlers(_config);
+  }
 }
 
 /**

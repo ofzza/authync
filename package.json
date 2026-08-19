@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npm run _copyres && tsc",
     "watch": "npm run _copyres && tsc --watch",
-    "_copyres": "rimraf ./dist/* && copyfiles --up 1 ./src/**/* ./src/* ./dist"
+    "_copyres": "rimraf ./dist/* && copyfiles --up 1 ./src/*.json ./src/*.html ./src/*.js ./src/*.css ./dist && copyfiles --up 1 ./src/res/**/* ./src/res/* ./dist && copyfiles --up 1 ./src/**/* ./src/* ./dist/src"
   },
   "repository": {
     "type": "git",

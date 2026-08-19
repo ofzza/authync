@@ -1,6 +1,6 @@
 import { DEBUGGING } from '../services/consts.js';
 import { defaultConfiguration, type Configuration, findDocumentUrlPatternConfiguration } from '../services/config.js';
-import { type SyncImportRequest } from '../services/sync.js';
+import { type SyncImportRequest, type SyncTargets } from '../services/sync.js';
 import { readFromGist } from '../services/gist.js';
 import type { CookiesImportRequest, CookiesImportResponse } from '../services/cookies.js';
 import { registerHandler as registerMessageHandler, MessageType, type Message, sendToBackground } from '../services/content/messaging.js';
@@ -30,26 +30,27 @@ export async function init() {
         stop();
       }
     }
-    // Register for cookie import response
-    registerMessageHandler(async (message: Message, sender: chrome.runtime.MessageSender) => {
-      if (message.type === MessageType.CookiesImportResponse) {
-        // Log: update received
-        if (DEBUGGING) console.log('CONTENT | config.ts: Received Cookie import update: ', message, sender);
-        // Prompt
-        const msg = message as CookiesImportResponse;
-        if (msg.success) {
-          updateLastCookieImportToast?.('success', `Imported ${msg.count} cookies`);
-        } else {
-          updateLastCookieImportToast?.('warning', `Failed importing cookies!`);
-        }
+  });
+
+  // Register for cookie import response
+  registerMessageHandler(async (message: Message, sender: chrome.runtime.MessageSender) => {
+    if (message.type === MessageType.CookiesImportResponse) {
+      // Log: update received
+      if (DEBUGGING) console.log('CONTENT | config.ts: Received Cookie import update: ', message, sender);
+      // Prompt
+      const msg = message as CookiesImportResponse;
+      if (msg.success) {
+        updateLastCookieImportToast?.('success', `Imported ${msg.count} cookies`);
+      } else {
+        updateLastCookieImportToast?.('warning', `Failed importing cookies!`);
       }
-    });
+    }
   });
 
   // Register for messages
-  registerMessageHandler(message => {
+  registerMessageHandler(async (message: Message) => {
     if (message.type === MessageType.SyncImportRequest) {
-      importAllFromGist((message as SyncImportRequest).documentUrlPattern);
+      await importAllFromGist((message as SyncImportRequest).documentUrlPattern, (message as SyncImportRequest).targets);
     }
   });
 }
@@ -111,20 +112,21 @@ async function onInterval() {
   // Log: starting
   if (DEBUGGING) console.log('CONTENT | sync_import.ts: Interval detected - Importing auth ...');
   // Import tab auth
-  await importAllFromGist();
+  await importAllFromGist(undefined);
 }
 
 /**
  * Import all of relevant tab data from Gist
  */
-async function importAllFromGist(documentUrlPattern: string = _documentUrlPattern) {
-  await Promise.all([importCookiesFromGist(documentUrlPattern), importLocalStorageFromGist(documentUrlPattern)]);
+async function importAllFromGist(documentUrlPattern: string | undefined, targets: SyncTargets[] = ['cookies', 'localStorage']) {
+  if (targets.includes('cookies')) await importCookiesFromGist(documentUrlPattern ?? _documentUrlPattern);
+  if (targets.includes('localStorage')) await importLocalStorageFromGist(documentUrlPattern ?? _documentUrlPattern);
 }
 
 /**
  * Import tab's local storage from Gist
  */
-async function importCookiesFromGist(documentUrlPattern: string = _documentUrlPattern) {
+async function importCookiesFromGist(documentUrlPattern: string) {
   // Prompt importing
   updateLastCookieImportToast = toast('info', 'Importing cookies ...');
   // Log: importing cookies
@@ -142,7 +144,7 @@ async function importCookiesFromGist(documentUrlPattern: string = _documentUrlPa
 /**
  * Import tab's local storage from Gist
  */
-async function importLocalStorageFromGist(documentUrlPattern: string = _documentUrlPattern) {
+async function importLocalStorageFromGist(documentUrlPattern: string) {
   // Prompt
   const updateToast = toast('info', `Importing local storage ...`);
   try {

@@ -38,23 +38,31 @@ export type DocumentUrlPatternConfiguration = {
  */
 export const defaultConfiguration: Configuration = {
   sync: {
-    gistId: '32a3e8282388a14272dc3a2c0450afd7',
-    gistToken: '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',
+    gistId: '',
+    gistToken: '',
   },
   documentUrlPatterns: {
+    // Test
     'https://ofzza.com/*': {
       refresh: { active: false, interval: 5 * 60e3 },
       sync: { active: false, interval: 10 * 60e3, direction: undefined },
     },
-    'https://opswat.atlassian.net/*': {
+    // Microsoft (GitHub)
+    'https://github.com/*': {
       refresh: { active: false, interval: 5 * 60e3 },
       sync: { active: false, interval: 10 * 60e3, direction: undefined },
     },
+    // Microsoft (Teams)
     'https://teams.cloud.microsoft/*': {
       refresh: { active: false, interval: 5 * 60e3 },
       sync: { active: false, interval: 10 * 60e3, direction: undefined },
     },
     'https://teams.microsoft.com/*': {
+      refresh: { active: false, interval: 5 * 60e3 },
+      sync: { active: false, interval: 10 * 60e3, direction: undefined },
+    },
+    // Attlasian
+    'https://opswat.atlassian.net/*': {
       refresh: { active: false, interval: 5 * 60e3 },
       sync: { active: false, interval: 10 * 60e3, direction: undefined },
     },

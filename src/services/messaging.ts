@@ -13,6 +13,7 @@ export type Message = {
  */
 export enum MessageType {
   Log = 'log',
+  PreventNavigation = 'prevent_navigation',
   ConfigurationRequest = 'configuration_request',
   ConfigurationUpdate = 'configuration_update',
   ConfigurationEditRequest = 'configuration_edit_request',

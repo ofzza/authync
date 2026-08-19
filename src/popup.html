@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Authync</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <h1 class="popup__title">Authync</h1>
+      <label class="popup__label" for="gist-id">Gist ID</label>
+      <input
+        id="gist-id"
+        class="popup__input"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="Enter the Gist ID to sync to/from"
+      />
+      <label class="popup__label" for="gist-token">Gist auth token</label>
+      <div class="popup__field">
+        <input
+          id="gist-token"
+          class="popup__input"
+          type="password"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Enter the Gist authentication token"
+        />
+        <button id="toggle-token" class="popup__toggle" type="button" aria-pressed="false" aria-label="Show token">
+          Show
+        </button>
+      </div>
+      <button id="save" class="popup__save" type="button">Save</button>
+      <p id="status" class="popup__status" role="status" aria-live="polite"></p>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

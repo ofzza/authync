@@ -7,18 +7,6 @@ import { toast } from '../services/content/toast.js';
  * Initializes content tab refreshing service
  */
 export async function init() {
-  // Check if just auto-refreshed
-  try {
-    const refreshTimestampStr = sessionStorage.getItem(`authync-autorefresh-timestamp`);
-    if (refreshTimestampStr) {
-      const refreshTimestamp = JSON.parse(refreshTimestampStr);
-      if (Date.now() - refreshTimestamp < 60e3) {
-        // Prompt
-        if (DEBUGGING) toast('success', `Auto refreshed the page`);
-      }
-    }
-  } catch {}
-
   // Register for configuration updates
   registerConfigurationUpdateHandler(config => {
     // Log: config change
@@ -35,6 +23,18 @@ export async function init() {
       }
     }
   });
+
+  // Check if just auto-refreshed
+  try {
+    const refreshTimestampStr = sessionStorage.getItem(`authync-autorefresh-timestamp`);
+    if (refreshTimestampStr) {
+      const refreshTimestamp = JSON.parse(refreshTimestampStr);
+      if (Date.now() - refreshTimestamp < 60e3) {
+        // Prompt
+        if (DEBUGGING) toast('success', `Auto refreshed the page`);
+      }
+    }
+  } catch {}
 }
 
 /**

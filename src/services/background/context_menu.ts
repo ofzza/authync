@@ -5,6 +5,7 @@ import { type SyncExportRequest, type SyncImportRequest } from '../sync.js';
 import { findDocumentUrlPatternConfiguration } from '../config.js';
 import { getConfiguration, registerHandler as registerConfigurationHandler, updateDocumentUrlPatternConfig } from './config.js';
 import { sendToTab } from './messaging.js';
+import type { PreventNavigationMessage } from '../navigation.js';
 
 export async function init() {
   const config = await getConfiguration();
@@ -31,6 +32,23 @@ function recreateContextMenus(config: Configuration) {
 
     chrome.contextMenus.create({
       parentId: 'authync',
+      id: `authync-prevent-navigation|${documentUrlPattern}`,
+      title: 'Prevent page navigation',
+      contexts: ['all'],
+      documentUrlPatterns: [documentUrlPattern],
+      type: 'normal',
+    });
+
+    chrome.contextMenus.create({
+      parentId: 'authync',
+      id: `authync-auto|${documentUrlPattern}`,
+      title: 'Automate authync for this domain',
+      contexts: ['all'],
+      documentUrlPatterns: [documentUrlPattern],
+      type: 'normal',
+    });
+    chrome.contextMenus.create({
+      parentId: `authync-auto|${documentUrlPattern}`,
       id: `authync-export-auto|${documentUrlPattern}`,
       title: 'Auto-Export auth session(s)',
       contexts: ['all'],
@@ -39,7 +57,7 @@ function recreateContextMenus(config: Configuration) {
       checked: matchedConfig.sync.active && matchedConfig.sync.direction == 'export',
     });
     chrome.contextMenus.create({
-      parentId: 'authync',
+      parentId: `authync-auto|${documentUrlPattern}`,
       id: `authync-import-auto|${documentUrlPattern}`,
       title: 'Auto-Import auth session(s)',
       contexts: ['all'],
@@ -48,7 +66,7 @@ function recreateContextMenus(config: Configuration) {
       checked: matchedConfig.sync.active && matchedConfig.sync.direction == 'import',
     });
     chrome.contextMenus.create({
-      parentId: 'authync',
+      parentId: `authync-auto|${documentUrlPattern}`,
       id: `authync-refresh-auto|${documentUrlPattern}`,
       title: 'Auto refresh when tab idle',
       contexts: ['all'],
@@ -60,23 +78,74 @@ function recreateContextMenus(config: Configuration) {
     chrome.contextMenus.create({
       parentId: 'authync',
       id: `authync-break|${documentUrlPattern}`,
-      type: 'separator',
       documentUrlPatterns: [documentUrlPattern],
+      type: 'separator',
     });
 
     chrome.contextMenus.create({
       parentId: 'authync',
-      id: `authync-export-now|${documentUrlPattern}`,
-      title: 'Export Auth session(s) NOW',
+      id: `authync-export|${documentUrlPattern}`,
+      title: 'Manual export',
       contexts: ['all'],
       documentUrlPatterns: [documentUrlPattern],
+      type: 'normal',
     });
     chrome.contextMenus.create({
-      parentId: 'authync',
-      id: `authync-import-now|${documentUrlPattern}`,
-      title: 'Import Auth session(s) NOW',
+      parentId: `authync-export|${documentUrlPattern}`,
+      id: `authync-export-all|${documentUrlPattern}`,
+      title: 'Export All',
       contexts: ['all'],
       documentUrlPatterns: [documentUrlPattern],
+      type: 'normal',
+    });
+    chrome.contextMenus.create({
+      parentId: `authync-export|${documentUrlPattern}`,
+      id: `authync-export-cookies|${documentUrlPattern}`,
+      title: 'Export Cookies',
+      contexts: ['all'],
+      documentUrlPatterns: [documentUrlPattern],
+      type: 'normal',
+    });
+    chrome.contextMenus.create({
+      parentId: `authync-export|${documentUrlPattern}`,
+      id: `authync-export-local-storage|${documentUrlPattern}`,
+      title: 'Export Local Storage',
+      contexts: ['all'],
+      documentUrlPatterns: [documentUrlPattern],
+      type: 'normal',
+    });
+
+    chrome.contextMenus.create({
+      parentId: 'authync',
+      id: `authync-import|${documentUrlPattern}`,
+      title: 'Manual import',
+      contexts: ['all'],
+      documentUrlPatterns: [documentUrlPattern],
+      type: 'normal',
+    });
+    chrome.contextMenus.create({
+      parentId: `authync-import|${documentUrlPattern}`,
+      id: `authync-import-all|${documentUrlPattern}`,
+      title: 'Import All',
+      contexts: ['all'],
+      documentUrlPatterns: [documentUrlPattern],
+      type: 'normal',
+    });
+    chrome.contextMenus.create({
+      parentId: `authync-import|${documentUrlPattern}`,
+      id: `authync-import-cookies|${documentUrlPattern}`,
+      title: 'Import Cookies',
+      contexts: ['all'],
+      documentUrlPatterns: [documentUrlPattern],
+      type: 'normal',
+    });
+    chrome.contextMenus.create({
+      parentId: `authync-import|${documentUrlPattern}`,
+      id: `authync-import-local-storage|${documentUrlPattern}`,
+      title: 'Import Local Storage',
+      contexts: ['all'],
+      documentUrlPatterns: [documentUrlPattern],
+      type: 'normal',
     });
   }
 }
@@ -88,7 +157,9 @@ function registerContextMenuHandlers(config: Configuration) {
     // Log: Menu item clicked
     if (DEBUGGING) console.log('BACKGROUND | context_menus.ts: Menu item clicked: ', action, pattern, info.checked);
 
-    if (action === 'authync-export-auto') {
+    if (action === 'authync-prevent-navigation') {
+      sendToTab(tab?.id!, { type: MessageType.PreventNavigation } as PreventNavigationMessage);
+    } else if (action === 'authync-export-auto') {
       const updatedConfig = config.documentUrlPatterns[pattern!];
       if (!updatedConfig) return;
       if (!!info.checked) {
@@ -115,10 +186,18 @@ function registerContextMenuHandlers(config: Configuration) {
       if (!updatedConfig) return;
       updatedConfig.refresh.active = !!info.checked;
       updateDocumentUrlPatternConfig(pattern!, updatedConfig);
-    } else if (action === 'authync-export-now') {
-      sendToTab(tab?.id!, { type: MessageType.SyncExportRequest, documentUrlPattern: pattern } as SyncExportRequest);
-    } else if (action === 'authync-import-now') {
-      sendToTab(tab?.id!, { type: MessageType.SyncImportRequest, documentUrlPattern: pattern } as SyncImportRequest);
+    } else if (action === 'authync-export-all') {
+      sendToTab(tab?.id!, { type: MessageType.SyncExportRequest, documentUrlPattern: pattern, targets: ['cookies', 'localStorage'] } as SyncExportRequest);
+    } else if (action === 'authync-export-cookies') {
+      sendToTab(tab?.id!, { type: MessageType.SyncExportRequest, documentUrlPattern: pattern, targets: ['cookies'] } as SyncExportRequest);
+    } else if (action === 'authync-export-local-storage') {
+      sendToTab(tab?.id!, { type: MessageType.SyncExportRequest, documentUrlPattern: pattern, targets: ['localStorage'] } as SyncExportRequest);
+    } else if (action === 'authync-import-all') {
+      sendToTab(tab?.id!, { type: MessageType.SyncImportRequest, documentUrlPattern: pattern, targets: ['cookies', 'localStorage'] } as SyncImportRequest);
+    } else if (action === 'authync-import-cookies') {
+      sendToTab(tab?.id!, { type: MessageType.SyncImportRequest, documentUrlPattern: pattern, targets: ['cookies'] } as SyncImportRequest);
+    } else if (action === 'authync-import-local-storage') {
+      sendToTab(tab?.id!, { type: MessageType.SyncImportRequest, documentUrlPattern: pattern, targets: ['localStorage'] } as SyncImportRequest);
     }
   });
 }

@@ -1,6 +1,6 @@
 import { DEBUGGING } from '../services/consts.js';
 import { defaultConfiguration, type Configuration, findDocumentUrlPatternConfiguration } from '../services/config.js';
-import { type SyncExportRequest } from '../services/sync.js';
+import { type SyncExportRequest, type SyncTargets } from '../services/sync.js';
 import { writeToGist } from '../services/gist.js';
 import type { CookiesExportRequest, CookiesExportResponse } from '../services/cookies.js';
 import { registerHandler as registerMessageHandler, MessageType, type Message, sendToBackground } from '../services/content/messaging.js';
@@ -30,26 +30,27 @@ export async function init() {
         stop();
       }
     }
-    // Register for cookie export response
-    registerMessageHandler(async (message: Message, sender: chrome.runtime.MessageSender) => {
-      if (message.type === MessageType.CookiesExportResponse) {
-        // Log: update received
-        if (DEBUGGING) console.log('CONTENT | config.ts: Received Cookie export update: ', message, sender);
-        // Prompt
-        const msg = message as CookiesExportResponse;
-        if (msg.success) {
-          updateLastCookieExportToast?.('success', `Exported ${msg.count} cookies`);
-        } else {
-          updateLastCookieExportToast?.('warning', `Failed exporting cookies!`);
-        }
+  });
+
+  // Register for cookie export response
+  registerMessageHandler(async (message: Message, sender: chrome.runtime.MessageSender) => {
+    if (message.type === MessageType.CookiesExportResponse) {
+      // Log: update received
+      if (DEBUGGING) console.log('CONTENT | config.ts: Received Cookie export update: ', message, sender);
+      // Prompt
+      const msg = message as CookiesExportResponse;
+      if (msg.success) {
+        updateLastCookieExportToast?.('success', `Exported ${msg.count} cookies`);
+      } else {
+        updateLastCookieExportToast?.('warning', `Failed exporting cookies!`);
       }
-    });
+    }
   });
 
   // Register for messages
-  registerMessageHandler(message => {
+  registerMessageHandler(async (message: Message) => {
     if (message.type === MessageType.SyncExportRequest) {
-      exportAllToGist((message as SyncExportRequest).documentUrlPattern);
+      await exportAllToGist((message as SyncExportRequest).documentUrlPattern, (message as SyncExportRequest).targets);
     }
   });
 }
@@ -111,20 +112,21 @@ async function onInterval() {
   // Log: starting
   if (DEBUGGING) console.log('CONTENT | sync_export.ts: Interval detected - Exporting auth ...');
   // Export tab auth
-  await exportAllToGist();
+  await exportAllToGist(undefined);
 }
 
 /**
  * Export all of relevant tab data to Gist
  */
-async function exportAllToGist(documentUrlPattern: string = _documentUrlPattern) {
-  await Promise.all([exportCookiesToGist(documentUrlPattern), exportLocalStorageToGist(documentUrlPattern)]);
+async function exportAllToGist(documentUrlPattern: string | undefined, targets: SyncTargets[] = ['cookies', 'localStorage']) {
+  if (targets.includes('cookies')) await exportCookiesToGist(documentUrlPattern ?? _documentUrlPattern);
+  if (targets.includes('localStorage')) await exportLocalStorageToGist(documentUrlPattern ?? _documentUrlPattern);
 }
 
 /**
  * Export tab's local storage to Gist
  */
-async function exportCookiesToGist(documentUrlPattern: string = _documentUrlPattern) {
+async function exportCookiesToGist(documentUrlPattern: string) {
   // Prompt exporting
   updateLastCookieExportToast = toast('info', 'Exporting cookies ...');
   // Log: exporting cookies
@@ -137,7 +139,7 @@ async function exportCookiesToGist(documentUrlPattern: string = _documentUrlPatt
 /**
  * Export tab's local storage to Gist
  */
-async function exportLocalStorageToGist(documentUrlPattern: string = _documentUrlPattern) {
+async function exportLocalStorageToGist(documentUrlPattern: string) {
   // Prompt exporting
   const updateToast = toast('info', 'Exporting local storage ...');
   try {

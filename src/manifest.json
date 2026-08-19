@@ -7,6 +7,10 @@
     "48": "res/logo-48.png",
     "128": "res/logo-128.png"
   },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Authync"
+  },
   "background": {
     "service_worker": "load-background.js",
     "type": "module"

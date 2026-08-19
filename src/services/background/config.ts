@@ -23,10 +23,6 @@ let _tabIds: number[] = [];
  * Initializes background configuration service
  */
 export async function init() {
-  // Load initial configuration
-  let _localStorageConfiguration = (await chrome.storage.local.get(['configuration']))['configuration'];
-  _config = _localStorageConfiguration ? JSON.parse(_localStorageConfiguration as string) : defaultConfiguration;
-
   // Handle configuration requests
   registerMessageHandler((message: Message, sender: chrome.runtime.MessageSender, sendResponse: (response?: Message) => void) => {
     if (message.type === MessageType.ConfigurationRequest) {
@@ -42,27 +38,31 @@ export async function init() {
       sendResponse(configurationUpdateMsg);
       // Log: sent update
       if (DEBUGGING) console.log('BACKGROUND | config.ts: Sent ConfigurationUpdate: ', configurationUpdateMsg);
-    } else if (message.type === MessageType.ConfigurationEditRequest) {
+    }
+    if (message.type === MessageType.ConfigurationEditRequest) {
       // Log: update received
       if (DEBUGGING) console.log('BACKGROUND | config.ts: Received ConfigurationEditRequest: ', message, sender);
       // Update configuration
       const _message = message as ConfigurationEditRequestMessage;
       updateConfig(_message.config);
-      // Send updated configuration
-      triggerConfigurationUpdateHandlers(_config);
-    } else if (message.type === MessageType.ConfigurationPartialEditRequest) {
+    }
+    if (message.type === MessageType.ConfigurationPartialEditRequest) {
       // Log: update received
       if (DEBUGGING) console.log('BACKGROUND | config.ts: Received ConfigurationPartialEditRequest: ', message, sender);
       // Update configuration
       const _message = message as ConfigurationPartialEditRequestMessage;
       updateDocumentUrlPatternConfig(_message.documentUrlPattern, _message.config);
-      // Send updated configuration
-      triggerConfigurationUpdateHandlers(_config);
     } else {
       // Log: unknown received
       if (DEBUGGING) console.log('BACKGROUND | config.ts: Received UNKNOWN: ', message, sender);
     }
   });
+
+  // Load initial configuration
+  let _localStorageConfiguration = (await chrome.storage.local.get(['configuration']))['configuration'];
+  _config = _localStorageConfiguration ? JSON.parse(_localStorageConfiguration as string) : defaultConfiguration;
+  // Send updated configuration
+  updateConfig(_config);
 }
 
 /**
@@ -80,6 +80,8 @@ export async function getConfiguration(): Promise<Configuration> {
 export async function updateConfig(config: Configuration) {
   // Update configuration
   _config = config;
+  // Persist configuration to local storage
+  await chrome.storage.local.set({ configuration: JSON.stringify(_config) });
   // Announce update change
   triggerConfigurationUpdateHandlers(_config);
   triggerConfigurationUpdateToTabs(_config);

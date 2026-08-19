@@ -18,11 +18,13 @@ export async function init() {
       const [success, count] = await exportCookiesToGist(origins, documentUrlPattern);
       // Respond
       sendToTab(sender.tab?.id!, { type: MessageType.CookiesExportResponse, success, count } as CookiesExportResponse);
-    } else if (message.type === MessageType.CookiesImportRequest) {
+    }
+    if (message.type === MessageType.CookiesImportRequest) {
       // Log: request received
       if (DEBUGGING) console.log('BACKGROUND | cookies.ts: Received CookiesImportRequest: ', message, sender);
       // export cookies
       const documentUrlPattern = (message as CookiesImportRequest).documentUrlPattern;
+      console.log('BACKGROUND | cookies.ts: Calling importCookiesFromGist with documentUrlPattern: ', documentUrlPattern); // TODO: Remove logging
       const [success, count] = await importCookiesFromGist(documentUrlPattern);
       // Respond
       sendToTab(sender.tab?.id!, { type: MessageType.CookiesImportResponse, success, count } as CookiesImportResponse);
@@ -44,7 +46,8 @@ async function exportCookiesToGist(origins: string[], documentUrlPattern: string
     await writeToGist(`${btoa(documentUrlPattern)}_COOKIES`, cookies, { documentUrlPattern, exportType: 'cookies' });
     // Return a user result prompt
     return [true, cookies.length];
-  } catch {
+  } catch (err) {
+    if (DEBUGGING) console.error('BACKGROUND | cookies.ts: Error while exporting cookies to Gist: ', err);
     return [false, 0];
   }
 }
@@ -53,8 +56,12 @@ async function exportCookiesToGist(origins: string[], documentUrlPattern: string
  * Reads cookies from Gist and sets them for a requested domain
  */
 async function importCookiesFromGist(documentUrlPattern: string): Promise<[boolean, number]> {
+  // TODO: Remove logging
+  console.log('BACKGROUND | cookies.ts: CALLED importCookiesFromGist with documentUrlPattern: ', documentUrlPattern);
+  console.log('BACKGROUND | cookies.ts: CALLING readFromGist with filename: ', `${btoa(documentUrlPattern)}_COOKIES`);
+
+  // Get cookies from Gist for the requested domain
   try {
-    // Get cookies from Gist for the requested domain
     const cookies = await readFromGist(`${btoa(documentUrlPattern)}_COOKIES`);
     // Log: reading cookies
     if (DEBUGGING) console.log('BACKGROUND | cookies.ts: Reading and updating cookies for requested domain from Gist: ', documentUrlPattern, cookies);
@@ -91,7 +98,8 @@ async function importCookiesFromGist(documentUrlPattern: string): Promise<[boole
 
     // Return a user result prompt
     return [true, count];
-  } catch {
+  } catch (err) {
+    if (DEBUGGING) console.error('BACKGROUND | cookies.ts: Error while reading cookies from Gist: ', err);
     return [false, 0];
   }
 }
