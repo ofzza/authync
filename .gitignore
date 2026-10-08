@@ -10,3 +10,6 @@
 
 # Explicit ignores
 *.gitignore.*
+
+# Dependencies
+node_modules

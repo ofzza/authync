@@ -24,7 +24,6 @@ export async function init() {
       if (DEBUGGING) console.log('BACKGROUND | cookies.ts: Received CookiesImportRequest: ', message, sender);
       // export cookies
       const documentUrlPattern = (message as CookiesImportRequest).documentUrlPattern;
-      console.log('BACKGROUND | cookies.ts: Calling importCookiesFromGist with documentUrlPattern: ', documentUrlPattern); // TODO: Remove logging
       const [success, count] = await importCookiesFromGist(documentUrlPattern);
       // Respond
       sendToTab(sender.tab?.id!, { type: MessageType.CookiesImportResponse, success, count } as CookiesImportResponse);
@@ -56,10 +55,6 @@ async function exportCookiesToGist(origins: string[], documentUrlPattern: string
  * Reads cookies from Gist and sets them for a requested domain
  */
 async function importCookiesFromGist(documentUrlPattern: string): Promise<[boolean, number]> {
-  // TODO: Remove logging
-  console.log('BACKGROUND | cookies.ts: CALLED importCookiesFromGist with documentUrlPattern: ', documentUrlPattern);
-  console.log('BACKGROUND | cookies.ts: CALLING readFromGist with filename: ', `${btoa(documentUrlPattern)}_COOKIES`);
-
   // Get cookies from Gist for the requested domain
   try {
     const cookies = await readFromGist(`${btoa(documentUrlPattern)}_COOKIES`);

@@ -34,6 +34,26 @@ export type DocumentUrlPatternConfiguration = {
 };
 
 /**
+ * Default refresh interval for a newly created document URL pattern configuration (in milliseconds)
+ */
+export const DEFAULT_REFRESH_INTERVAL = 5 * 60e3;
+/**
+ * Default sync interval for a newly created document URL pattern configuration (in milliseconds)
+ */
+export const DEFAULT_SYNC_INTERVAL = 10 * 60e3;
+
+/**
+ * Creates a default per document URL pattern configuration, used as the starting point for new entries
+ * @returns A fresh default document URL pattern configuration
+ */
+export function createDefaultDocumentUrlPatternConfiguration(): DocumentUrlPatternConfiguration {
+  return {
+    refresh: { active: false, interval: DEFAULT_REFRESH_INTERVAL },
+    sync: { active: false, interval: DEFAULT_SYNC_INTERVAL, direction: undefined },
+  };
+}
+
+/**
  * Default configuration value
  */
 export const defaultConfiguration: Configuration = {
@@ -43,29 +63,12 @@ export const defaultConfiguration: Configuration = {
   },
   documentUrlPatterns: {
     // Test
-    'https://ofzza.com/*': {
-      refresh: { active: false, interval: 5 * 60e3 },
-      sync: { active: false, interval: 10 * 60e3, direction: undefined },
-    },
+    'https://ofzza.com/*': createDefaultDocumentUrlPatternConfiguration(),
     // Microsoft (GitHub)
-    'https://github.com/*': {
-      refresh: { active: false, interval: 5 * 60e3 },
-      sync: { active: false, interval: 10 * 60e3, direction: undefined },
-    },
+    'https://github.com/*': createDefaultDocumentUrlPatternConfiguration(),
     // Microsoft (Teams)
-    'https://teams.cloud.microsoft/*': {
-      refresh: { active: false, interval: 5 * 60e3 },
-      sync: { active: false, interval: 10 * 60e3, direction: undefined },
-    },
-    'https://teams.microsoft.com/*': {
-      refresh: { active: false, interval: 5 * 60e3 },
-      sync: { active: false, interval: 10 * 60e3, direction: undefined },
-    },
-    // Attlasian
-    'https://opswat.atlassian.net/*': {
-      refresh: { active: false, interval: 5 * 60e3 },
-      sync: { active: false, interval: 10 * 60e3, direction: undefined },
-    },
+    'https://teams.cloud.microsoft/*': createDefaultDocumentUrlPatternConfiguration(),
+    'https://teams.microsoft.com/*': createDefaultDocumentUrlPatternConfiguration(),
   },
 };
 

@@ -9,29 +9,87 @@
   <body>
     <main class="popup">
       <h1 class="popup__title">Authync</h1>
-      <label class="popup__label" for="gist-id">Gist ID</label>
-      <input
-        id="gist-id"
-        class="popup__input"
-        type="text"
-        autocomplete="off"
-        spellcheck="false"
-        placeholder="Enter the Gist ID to sync to/from"
-      />
-      <label class="popup__label" for="gist-token">Gist auth token</label>
-      <div class="popup__field">
+
+      <section class="popup__section">
+        <h2 class="popup__subtitle">Sync</h2>
+        <label class="popup__label" for="gist-id">Gist ID</label>
         <input
-          id="gist-token"
+          id="gist-id"
           class="popup__input"
-          type="password"
+          type="text"
           autocomplete="off"
           spellcheck="false"
-          placeholder="Enter the Gist authentication token"
+          placeholder="Enter the Gist ID to sync to/from"
         />
-        <button id="toggle-token" class="popup__toggle" type="button" aria-pressed="false" aria-label="Show token">
-          Show
-        </button>
-      </div>
+        <label class="popup__label" for="gist-token">Gist auth token</label>
+        <div class="popup__field">
+          <input
+            id="gist-token"
+            class="popup__input"
+            type="password"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Enter the Gist authentication token"
+          />
+          <button id="toggle-token" class="popup__toggle" type="button" aria-pressed="false" aria-label="Show token">
+            Show
+          </button>
+        </div>
+      </section>
+
+      <section class="popup__section">
+        <div class="popup__section-header">
+          <h2 class="popup__subtitle">URL patterns</h2>
+          <button id="reset-patterns" class="popup__link-button" type="button">Reset to defaults</button>
+        </div>
+        <p class="popup__hint">
+          Pages the extension acts on. Use <code>*</code> as a wildcard (e.g. <code>https://example.com/*</code>).
+        </p>
+        <div id="patterns" class="popup__patterns"></div>
+        <button id="add-pattern" class="popup__add" type="button">+ Add pattern</button>
+      </section>
+
+      <template id="pattern-row-template">
+        <div class="popup__pattern">
+          <div class="popup__pattern-top">
+            <input
+              class="popup__input popup__pattern-url"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="https://example.com/*"
+            />
+            <button class="popup__remove" type="button" aria-label="Remove pattern" title="Remove pattern">×</button>
+          </div>
+          <div class="popup__pattern-options">
+            <label class="popup__option">
+              <input class="popup__pattern-refresh-active" type="checkbox" />
+              <span>Auto-refresh when idle</span>
+            </label>
+            <label class="popup__option popup__option--interval">
+              <span>every</span>
+              <input class="popup__pattern-refresh-interval popup__interval" type="number" min="1" step="1" />
+              <span>min</span>
+            </label>
+            <label class="popup__option">
+              <input class="popup__pattern-sync-active" type="checkbox" />
+              <span>Auto-sync</span>
+            </label>
+            <label class="popup__option">
+              <select class="popup__pattern-sync-direction popup__select">
+                <option value="export">Export</option>
+                <option value="import">Import</option>
+              </select>
+            </label>
+            <label class="popup__option popup__option--interval">
+              <span>every</span>
+              <input class="popup__pattern-sync-interval popup__interval" type="number" min="1" step="1" />
+              <span>min</span>
+            </label>
+          </div>
+        </div>
+      </template>
+
       <button id="save" class="popup__save" type="button">Save</button>
       <p id="status" class="popup__status" role="status" aria-live="polite"></p>
     </main>
